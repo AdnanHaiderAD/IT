@@ -1,6 +1,6 @@
 
 #! /usr/bin/python
-import re,math
+import re,math,operator
 def unigrammodel(file):
 	f = open(file,'r')
 	try: 
@@ -151,3 +151,58 @@ def kullbackdiv(probdis1,probdis2):
 			informationcontent+= item*math.log(item/probdis2[index],2)
 	return informationcontent
 
+
+
+#compression with adaptation:
+
+def compressionAdaptUnf(file):
+	f =open (file,'r')
+	Ki_counter=dict([])
+	letters =map(chr,range(97,123))	
+	letters.append(' ')
+	for alph in letters:
+		Ki_counter[alph]=0
+	
+	try:
+		content=f.read()
+		informationcontent=0
+		for i in range(len(content)):
+			ai= content[i]
+			informationcontent+= -math.log(float(Ki_counter[ai]+1)/float(i+len(letters)),2)
+			Ki_counter[ai]+=1
+		return informationcontent
+	finally:
+		f.close()
+
+def compressionAdaptBg(file):
+	f =open (file,'r')
+	Ki_counter=dict([])
+	letters =map(chr,range(97,123))	
+	print letters
+	letters.append(' ')
+	for e in letters:
+		for m in letters:
+			Ki_counter[e+m]=0
+	prev_l=''
+	try:
+		content=f.read()
+		informationcontent=0
+		for i in range(len(content)):
+			if i==0:
+				informationcontent+=-math.log(float(1)/len(letters),2)
+					
+			else:
+				nj= sum([ Ki_counter[prev_l+x]	for x in letters] )
+				informationcontent+= -math.log(float(Ki_counter[prev_l+content[i]]+1)/float(nj+len(letters)),2)
+				Ki_counter[prev_l+content[i]]+=1
+			prev_l=content[i]
+				
+		return informationcontent
+	finally:
+		f.close()
+
+def XOR():
+	string="nutritious snacks"
+	stringtoascii = [ord(c)  for c in string]
+	stringtoascii=stringtoascii+ [59, 6,17 ,0,83,84,26,90,64,70,25,66,86,82,90,95,75]	
+	return chr(reduce(operator.xor,stringtoascii))
