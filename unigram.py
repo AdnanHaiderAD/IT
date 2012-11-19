@@ -10,9 +10,9 @@ def unigrammodel(file):
 		sizeOFcontent=len(content)
 		
 		for l in letters:
-			unigramcounts.append(len(re.findall(l,content)))
+			unigramcounts.append(len(re.findall(l,content)))#counts the number of times each letter in the alphabet occurs in the file
 		unigramcounts.append(sizeOFcontent-sum(unigramcounts))	
-		probabilitydist=[float(x)/float(sizeOFcontent) for x in unigramcounts]
+		probabilitydist=[float(x)/float(sizeOFcontent) for x in unigramcounts]#probability distribution of a character chosen random from the file
 		
 		H =[-x*math.log(x,2) for x in probabilitydist]
 		return sum(H),probabilitydist
