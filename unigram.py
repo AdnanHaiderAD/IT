@@ -206,3 +206,40 @@ def XOR():
 	stringtoascii = [ord(c)  for c in string]
 	stringtoascii=stringtoascii+ [59, 6,17 ,0,83,84,26,90,64,70,25,66,86,82,90,95,75]	
 	return chr(reduce(operator.xor,stringtoascii))
+
+def LTdecode(file,file2):
+	f=open(file,'r')
+	g=open(file2,'r')
+	encodedPackets=[]
+	SourcebitsUsed=[]
+	try:
+		contents=f.readlines()
+		for i in range(len(contents)):
+			encodedPackets.append(int(contents[i].strip()))
+		contentSource = g.readlines()
+		for line in contentSource:
+			line = line.strip().split()
+			sourcebits=[int(x) for x in line]
+			SourcebitsUsed.append(sourcebits)
+		num_of_sourcebits=0
+		for list in SourcebitsUsed:
+			if max(list)>num_of_sourcebits:
+				num_of_sourcebits = max(list)
+		decodedS =['']*num_of_sourcebits
+		PacketsU=[]
+		while '' in decodedS:
+			for index, list in enumerate(SourcebitsUsed):
+				if len(list)==1 :
+					sourcebit=list[0]
+					p=SourcebitsUsed[index].pop()
+					decodedS[sourcebit-1] =chr(encodedPackets[index])
+					PacketsU.append(index)
+					for j, lis in enumerate( SourcebitsUsed):
+						if sourcebit in lis:
+							lis.remove(sourcebit)
+							encodedPackets[j] = operator.xor(encodedPackets[j],encodedPackets[index])
+		print decodedS	,PacketsU
+	finally:
+		f.close()	
+		g.close()
+		
