@@ -1,0 +1,122 @@
+---Character Statistics---
+1.
+Code Used :
+#! /usr/bin/python
+import re,math,operator
+def unigrammodel(file):
+	f = open(file,'r')
+	try: 
+		content= f.read()
+		letters =map(chr,range(97,123))
+		unigramcounts =[]
+		sizeOFcontent=len(content)
+		
+		for l in letters:
+			unigramcounts.append(len(re.findall(l,content)))#counts the number of times each letter in the alphabet occurs in the file
+		unigramcounts.append(sizeOFcontent-sum(unigramcounts))	
+		probabilitydist=[float(x)/float(sizeOFcontent) for x in unigramcounts]#probability distribution of a character chosen random from the file
+		
+		H =[-x*math.log(x,2) for x in probabilitydist]
+		return sum(H),probabilitydist
+	except:
+		print "Error in code"
+	finally:
+			f.close()
+					
+
+The entropy H(Xn) =4.17 bits(3sf)
+
+
+---Noisy channel Coding----
+
+6.
+Code Used:
+#! /usr/bin/python
+import operator
+def XOR():
+	string="nutritious snacks"
+	stringtoascii = [ord(c)  for c in string]
+	stringtoascii=stringtoascii+ [59, 6,17 ,0,83,84,26,90,64,70,25,66,86,82,90,95,75]	
+	return chr(reduce(operator.xor,stringtoascii))
+
+The resutant ASCII string that is outputed:'['
+
+
+
+
+7.
+ Overview of the algorithm:
+
+The steps performed by the algorithm are as follows:
+
+Step1:
+In step 1,the algorithm uses the information in 'received.txt' to create the list  'encodedPackets' and utilises the information in 'packets.txt' to create the list  'sourceBitsUsed'. 'encodedPackets' is a list of integers while 'sourceBitsUsed' is a list of list of integers but both lists have the same size. The ith  item in  encodedPackets[i] represents the ith encoded packet received and the ith list associated with sourceBitsUsed[i]  corresponds to  the source bits used to create this packet. Hence the indices of the lists serve as edges connecting  encoding packets with their appropiate source bit information.
+
+Step 2:
+In step 2, The algorithm  sequentially searches through each list in sourceBitsUsed to find the max integer 'm'. From the value of 'm', the algorithm can  then directly infer the number of source bits that it needs to deocde. 
+
+Step3:
+
+
+In the last step, the algorithm creates a list {s1,s2.....sm} (where si represents the source packet i) and executes the following loop until all si have been decoded.
+Loop-
+	while there exists s_i that is not decoded:
+		for each list L in sourceBitsUsed:
+			The algorithm checks whether the L contains 1 item. This check allows the program to locate encoded packets that are connected to only one source packet.  
+			If the above check succeeds:
+				i:Set the kth source alphabet(the value of k is given by the source packet) to the string chaacter defined by L's associated encoded packet.
+				ii:Store L's associated encoded packet to local variable 'num' and for all lists in sourceBitsUsed that contains this source packet, apply bit wise modulo 2 addition between the corresponding encoded packet of these lists and num.
+				iii: Remove the source packet from every list in sourcebitsUsed.(Step ii and Step iii ensures all edges connected L's sourcepacket has been removed)
+	
+
+
+
+
+
+Assumption made by the algorithm:
+The algorothm assumes that the receiver has collected enough encoded packets to decode the original message.
+
+
+The decoded String:
+"Password: X!3baA1z"
+The received packets that were used:[15, 22, 1, 20, 21, 19, 7, 9, 16, 18, 5, 6, 8, 10, 13, 14, 11, 12]
+			   
+Code:
+#! /usr/bin/python
+import operator
+def LTdecode(file,file2):
+	f=open(file,'r')
+	g=open(file2,'r')
+	encodedPackets=[]
+	SourcebitsUsed=[]
+	try:
+		contents=f.readlines()
+		for i in range(len(contents)):
+			encodedPackets.append(int(contents[i].strip()))
+		contentSource = g.readlines()
+		for line in contentSource:
+			line = line.strip().split()
+			sourcebits=[int(x) for x in line]
+			SourcebitsUsed.append(sourcebits)
+		num_of_sourcebits=0
+		for list in SourcebitsUsed:
+			if max(list)>num_of_sourcebits:
+				num_of_sourcebits = max(list)
+		decodedS =['']*num_of_sourcebits
+		PacketsU=[]
+		while '' in decodedS:
+			for index, list in enumerate(SourcebitsUsed):
+				if len(list)==1 :
+					sourcebit=list[0]
+					p=SourcebitsUsed[index].pop()
+					decodedS[sourcebit-1] =chr(encodedPackets[index])
+					PacketsU.append(index)
+					for j, lis in enumerate( SourcebitsUsed):
+						if sourcebit in lis:
+							lis.remove(sourcebit)
+							encodedPackets[j] = operator.xor(encodedPackets[j],encodedPackets[index])
+		print decodedS	,PacketsU
+	finally:
+		f.close()	
+		g.close()
+		

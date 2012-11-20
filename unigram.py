@@ -1,6 +1,6 @@
 
 #! /usr/bin/python
-import re,math,operator
+import re,math,operator,random,numpy
 def unigrammodel(file):
 	f = open(file,'r')
 	try: 
@@ -242,4 +242,70 @@ def LTdecode(file,file2):
 	finally:
 		f.close()	
 		g.close()
+
+
+def simulation():
+	number=111
+	L=[]
+	i=0
+	p=0.1
+	f=0.2
+	while i<1000000:
+		num="111"
 		
+		for j in range(len(num)):
+				random.seed(random.randint(1,1000))
+				if j<2:
+					r=random.random()
+					
+					if r<p:
+						if i<30:
+							print r
+						if j==0:
+							num="011"
+						else:
+							num="101"
+						L.append(int(num))
+						break
+				else:
+					if random.random()<f:
+						num="110"
+						L.append(int(num))
+						break
+		i+=1
+					
+	
+	
+	return float(len(L))/1000000, L[:30]
+def Encoder(sourcebits):
+	R3code= sourcebits[0]*3+sourcebits[1]*3 + sourcebits[2]*3+sourcebits[3]*3
+	s1=int(sourcebits[0])
+	s2=int(sourcebits[1])
+	s3=int(sourcebits[2])
+	s4=int(sourcebits[3])
+	s5 = reduce(operator.xor,[s1,s2,s3])
+	s6 = reduce(operator.xor,[s2,s3,s4])
+	s7= reduce(operator.xor,[s1,s3,s4])
+	return R3code+str(s5)+str(s6)+str(s7)
+
+def Decoder(ReceivedBits):
+	DecodedBits=[]
+	for i in range(4):
+		seq= ReceivedBits[3*i:3*i+3]
+		if len(re.findall('0',seq))>1:
+			DecodedBits.append(0)
+		else:
+			DecodedBits.append(1)	
+	#computing the syndrome z
+	t= numpy.array([DecodedBits[0],DecodedBits[1],DecodedBits[2],DecodedBits[3],int(ReceivedBits[-3]),int(ReceivedBits[-2]),int(ReceivedBits[-1])])
+	H= numpy.array([[1,1,1,0,1,0,0],[0,1,1,1,0,1,0],[1,0,1,1,0,0,1]])
+	z= numpy.dot(H,t)
+	z =[ 2^x for x in z]
+	columnsofH = [[1,0,1],[1,1,0],[1,1,1],[0,1,1][1,0,0],[0,1,0],[0,0,1]]
+	z=[1,1,0]
+	if z!=[0,0,0]:
+		index = columsofH.index(z)
+		t[index]=(t[index]+1)^2
+	return z	
+		
+	return		
