@@ -26,9 +26,13 @@ def unigrammodel(file):
 
 The entropy H(Xn) =4.17 bits(3sf)
 
+----Bigram Statistics---
+2.
+
 
 ---Noisy channel Coding----
 
+---X0R-ing packets-------
 6.
 Code Used:
 #! /usr/bin/python
@@ -42,7 +46,7 @@ def XOR():
 The resutant ASCII string that is outputed:'['
 
 
-
+---Decoding packets from a digital fountain----
 
 7.
  Overview of the algorithm:
@@ -119,4 +123,79 @@ def LTdecode(file,file2):
 	finally:
 		f.close()	
 		g.close()
+
+
+----Creating a Code----
+8.
+
+The error correcting code that I have employed for the last task is a combination of the Hamming(7,4) code and a repetition code.The description of the encoding and decoding algorithms is as follows:
+
+Encoding Algorithm:
+
+At the initial step, the encoding algorithm adds redundancy to blocks of data instead of encoding 1 bit at a time. The algorithm coverts a sequence of source bits 's' of length K=4 into a transmitted sequence 't' of length N=7. These N-K extra bits are linear functions of the source bits and serve as their parity checks. Before transmission through the binary symmetric channel, further redundancy is added to the transmitted sequence 't'. Each of the source bits is repeated three times hence increasing the length of the transmitted sequence to N=15. 
+
+The code used to implement the encoding algorithm is as follows:
+Code:
+#! /usr/bin/python
+import operator
+def Encoder(sourcebits):
+	R3code= sourcebits[0]*3+sourcebits[1]*3 + sourcebits[2]*3+sourcebits[3]*3
+	s1=int(sourcebits[0])
+	s2=int(sourcebits[1])
+	s3=int(sourcebits[2])
+	s4=int(sourcebits[3])
+	s5 = reduce(operator.xor,[s1,s2,s3])
+	s6 = reduce(operator.xor,[s2,s3,s4])
+	s7= reduce(operator.xor,[s1,s3,s4])
+	return R3code+str(s5)+str(s6)+str(s7) 	
+
+
+This proposed error correcting code will fail to correct errors in situations where the noisy communication channel used to forward the transmitted sequence does not belong to the class of discrete memoryless channel. The decoding process of the proposed error correcting code assumes that the channel used is synchronized i.e the channel does not perform any insertions, deletions or permutations to the transmitted requence and noise is only added in the form of bit flips. As it is already stated in the question that the channel used is a BSC, which belongs to the class of discrete memoryless channels, it is hence safe to conclude that we are operating in a synchronized channel
+
+Decoding algorithm:
+
+The recieved sequence 'r' from the noist channel can be interpreted as a vector r where  r= t+n (t is the transmitted vector and n is the noise vector added by the channel). Upon receiving this vector r, the decoder attempts to remove and correct errors in two stages before outputting the most likley values of the original 4 source bits 's'.
+
+Stage 1:
+In the first stage, the algorithm reads the first 12 bits and partitions these bits in groups of three in a sequential manner.The groups generated will be of the form {r1,r2,r3} ,{r4,r5,r6} and so forth. If the channel introduced no error during transmission, then each group 'i' (where i belongs to {1,2,3,4}) will contain  copies of the single source bit s_i. To reduce the effect of noise, the algorithm extracts the most likely values of  each source bit s_i by performing a majority vote  on their respective groups.
+
+Stage 2:
+In the second stage, the algorithm reads the final three bits and uses these bits to achieve better estimates for the values of the source bits.This stage infact is exactly identical to the Hamming(7,4) decoding process. After conducting step 1, the decoder reduces the size of the received vector from 15 to 7 by removing redundant copies of the source bits and makes estimates of the values associated with the source bits through the use of majority votes. If all the noise introduced by the channel was removed in the stage 1, then this new reduce r vector will satisfy the equation r=G'*s (where G' represents the transpose of the 4 by 7 matrix mentioned in page 10 in Mackay) and the equation H*r=[0,0,0]( where each row of the matrix H represents a parity check).
+However, the decoding process suffers from the same drawbacks as the hamming(7,4) decoder. The decoder fails to correct any m-bit error patterns where m>=2.
+To correct one-bit error patterns, the algorithm uses the following methodology:
+
+As I have already mentioned, if there were no errors, then r=t and Hr=[0,0,0] (in modulo 2 arithmetic)
+Now in the case where r= t+n w(here n is one bit error pattern ie it is a vector of length 7 where only the ith entry is non-zero and set to 1)
+ H*r= H*(t+n) = H*t +H*n
+Since we already know H*t=[0 0 0] in modulo 2 arithmetic, therefore the product of H*r will be equal to  H*n whose product produces the ith column of the H matrix.There are seven possible one-bit error patterns that can be corrected by the decoder and each of these patterns have a one-to correpondence with the columns of the H matrix. Thus for example, if n=[0000100] then H*r will produce the 5th column of H, hence telling the algorithm to flip the 5th bit of vector r. This method is in fact optimal since it aims to flip the minimum number of bits such that the three parity checks are satisfied.
+	
+
+
+The code used to implement the decoding algorithm is as follows:
+#! /usr/bin/python
+import numpy
+def Decoder(ReceivedBits):
+	DecodedBits=[]
+	#Stage 1: decoding the the four source bits using majority vote
+	for i in range(4):
+		seq= ReceivedBits[3*i:3*i+3]
+		if len(re.findall('0',seq))>1:
+			DecodedBits.append(0)
+		else:
+			DecodedBits.append(1)	
+	#computing the syndrome z and using the parity checks to detect errors missed by the first stage
+	t= numpy.array([DecodedBits[0],DecodedBits[1],DecodedBits[2],DecodedBits[3],int(ReceivedBits[-3]),int(ReceivedBits[-2]),int(ReceivedBits[-1])])
+	H= numpy.array([[1,1,1,0,1,0,0],[0,1,1,1,0,1,0],[1,0,1,1,0,0,1]])
+	z= numpy.dot(H,t)
+	z =[ 2^x for x in z]
+	columnsofH = [[1,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,0],[0,1,0],[0,0,1]]
+	
+	if z!=[0,0,0]:
+		print 'yes'
+		index = columnsofH.index(z)
 		
+		t[index]=(t[index]+1)^2
+	return t[:4]	
+		
+	return		
+	

@@ -301,11 +301,13 @@ def Decoder(ReceivedBits):
 	H= numpy.array([[1,1,1,0,1,0,0],[0,1,1,1,0,1,0],[1,0,1,1,0,0,1]])
 	z= numpy.dot(H,t)
 	z =[ 2^x for x in z]
-	columnsofH = [[1,0,1],[1,1,0],[1,1,1],[0,1,1][1,0,0],[0,1,0],[0,0,1]]
-	z=[1,1,0]
+	columnsofH = [[1,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,0],[0,1,0],[0,0,1]]
+	
 	if z!=[0,0,0]:
-		index = columsofH.index(z)
+		print 'yes'
+		index = columnsofH.index(z)
+		
 		t[index]=(t[index]+1)^2
-	return z	
+	return t[:4]	
 		
 	return		
