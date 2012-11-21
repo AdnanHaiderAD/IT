@@ -36,12 +36,11 @@ def bigrammodel(file):
 				pattern=l+l2
 				
 				bigramcounts.append(len(re.findall(pattern,content)))
-		print bigramcounts			
+					
 		sizeOFcontent= len(content)
-		print sizeOFcontent		
+				
 		probabilitydist=[float(x)/float(sizeOFcontent) for x in bigramcounts]
-		print probabilitydist
-		print sum(probabilitydist)
+		
 		H =[-x*math.log(x,2) for x in probabilitydist if x!=0]
 		return sum(H),probabilitydist
 	except:

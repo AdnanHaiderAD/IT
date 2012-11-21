@@ -1,8 +1,11 @@
 ---Character Statistics---
 1.
+H(Xn) = sum [- P(xn)log(Pxn)  ] here sum sum stands for summation
+P(xn) = cn/N where cn is the number of time xn occurs in the file and N is the total number of alphabets in the file
+
 Code Used :
 #! /usr/bin/python
-import re,math,operator
+import re,math
 def unigrammodel(file):
 	f = open(file,'r')
 	try: 
@@ -24,10 +27,67 @@ def unigrammodel(file):
 			f.close()
 					
 
+
 The entropy H(Xn) =4.17 bits(3sf)
 
 ----Bigram Statistics---
 2.
+
+The aim of this excercise is to  compute the joint entropy H(Xn,Xn+1)
+We know  H(Xn,Xn+1)= sum (-P(xn,xn+1)log(P(xn,xn+1)) where
+P(xn,xn+1) is the probability of selecting a character xn randomly from a file and also reading the next character xn+1
+Using the product rule P(xn,xn+1)= P(xn)P(xn+1|xn)
+Now P(xn) as I have mentioned above in my code is:
+		P(xn) = cn/N where cn is the number of time xn occurs in the file and N is the total number of alphabets in the file
+Similarly 
+	P(xn+1|xn) = wn/cn where  wn is the number of times xn and xn+1 occur together and the interpretation of cn is the smae as above
+Therefore  P(xn)P(xn+1|xn) =cn/N *wn/cn = wn/N = P(xn,xn+1)
+The code used to perform this computation is as follows:
+
+Code:
+import re,math
+def bigrammodel(file):
+	f = open(file,'r')
+	try: 
+		content= f.read()
+		letters =map(chr,range(97,123))
+		letters.append(' ')
+		bigramcounts =[]
+		
+		
+		for l in letters:
+			for l2 in letters:
+				pattern=l+l2
+				
+				bigramcounts.append(len(re.findall(pattern,content)))
+		print bigramcounts			
+		sizeOFcontent= len(content)
+		print sizeOFcontent		
+		probabilitydist=[float(x)/float(sizeOFcontent) for x in bigramcounts]
+		print probabilitydist
+		print sum(probabilitydist)
+		H =[-x*math.log(x,2) for x in probabilitydist if x!=0]
+		return sum(H),probabilitydist
+	except:
+		print "Error in code"
+	finally:
+			f.close()	
+	
+a)
+The join entrophy  H(Xn,Xn+1)=7.57 bits(3sf)
+
+b)  H(Xn,Xn+1)< 2H(Xn) because the joint proabilities P(xn,xn+1) captures the context dependedency between the symbols. In English  for example letter 'u'; is more probable after 'q' than after 'e'. Hence the information content associated with observing a letter like 'u' at any point will change if  we take into account the knowledge gained from our previous observations.
+
+c)
+We know  H(Xn,Xn+1)= H(Xn) + H(Xn+1|Xn)
+	Hence H(Xn+1|Xn)=  H(Xn,Xn+1)- H(Xn) =7.57- 4.17
+					     = 3.40 bits(3sf)
+
+
+
+---Compression with known distributions---
+3.
+
 
 
 ---Noisy channel Coding----
