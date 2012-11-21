@@ -60,7 +60,7 @@ def arithmeticCodingUnf(file):
 			for i in range(len(content)):
 				informationcontent= informationcontent- math.log(prodis[letters.index(content[i])],2)
 			
-			return math.ceil(informationcontent),prodis
+			return informationcontent,prodis
 		finally:
 				f.close()
 				
@@ -88,7 +88,7 @@ def arithmeticCodingbg(file):
 				information= math.log(conditional_prob,2) 
 				informationcontent= informationcontent +information
 				prev_l= content[i]
-			return math.ceil(-informationcontent),bgprodis
+			return -informationcontent,bgprodis
 		finally:
 			f.close()
 
