@@ -3,7 +3,7 @@
 H(Xn) = sum [- P(xn)log(Pxn)  ] here sum sum stands for summation
 P(xn) = cn/N where cn is the number of time xn occurs in the file and N is the total number of alphabets in the file
 
-Code Used :
+Code written :
 #! /usr/bin/python
 import re,math
 def unigrammodel(file):
@@ -90,10 +90,11 @@ We know  H(Xn,Xn+1)= H(Xn) + H(Xn+1|Xn)
 3.
 For any probabilistic model H, the maximum number of bits used by an arithmetic encoder is equal to ceil[h(x|H)]+2 bits where ceil is the ceiling function and h(x|H) = log[1/P(x|H)]
 a)
-In the first instance, the characters are generated i.i.d with p(xn) using the unigram model. Therefore P(x|H) = prod_1^N[ P(x_i)] where prod_i^N represents the capital Pi notation representing the product of all p(xi) ranging from i=1 to i=N  where xi represents the ith alphabet in the file.
+In the first instance, the characters are generated i.i.d with p(xn) using the unigram model. Therefore P(x|H) = prod_1^N[ P(x_i)] where prod_i^N corresponds the capital Pi notation representing the product of all p(xi) ranging from i=1 to i=N  where xi represents the ith alphabet in the file.
+[Note : during the actual computing phase, multiplying large number of probabilities lead to numerical underflow. Hence to overcome this effect I have added the probabilities in log-space]
 Therefore the maximum number of bits the arithmetic encoder might use to encode the file is ceil[log[1/P(x|H)]]+2= 1433836 bits
 
-Code Used:
+Code :
 #! /usr/bin/python
 import math
 def arithmeticCodingUnf(file):
@@ -114,12 +115,12 @@ def arithmeticCodingUnf(file):
 				
 
 b)
-In the second instance, the probabilistic model employed is more sophisticated. The first character is generated from p(xn) and all subsequent characters are generated from p(xn+1|xn) distribution. Therefore P(x|H) = p(x1)prod_i^N[ P(xi+1|xi)] (prod_i^N represents the capital Pi notation representing the product of all p(xi+1|xi) ranging from i=1 to i=N  where xi+1 and xi represents the i+1 and ith alphabet in the file.
+In the second instance, the probabilistic model employed is more sophisticated. The first character is generated from p(xn) and all subsequent characters are generated from p(xn+1|xn) distribution. Therefore P(x|H) = p(x1)prod_i^N[ P(xi+1|xi)] (prod_i^N corresponds the capital Pi notation representing the product of all p(xi+1|xi) ranging from i=1 to i=N  where xi+1 and xi represents the i+1 and ith alphabet in the file.
 The distribution of p(xn+1|xn) has been computed from the joint distibution p(xn,xn+1) ( computed in question 2) and marginal distribution p(xn)(computed in question 1) 
 using Bayes rule: p(xn+1|xn)= p(xn,xn+1)/p(xn)
 Therefore the maximum number of bits the arithmetic encoder might use to encode the file is ceil[log[1/P(x|H)]]+2= 1171230 bits
 
-Code Used:
+Code written:
 #! /usr/bin/python
 import math
 def getconditiondist(size,index,joindis):
@@ -154,14 +155,102 @@ def arithmeticCodingbg(file):
 
 ---Compression with Limited Header---
 
+ 4.
+In real systems, senders are required to communicate their choice of models through encoding the description of the model in the header information. In the given scenario, the sender and receiver agree to employ the following suboptimal scheme: each probability pi generated from the  probabilistic model H is encoded to the next largest muliple 2^(-8) using 8 bits, qi= ceil(2^8*pi)/2^8 where ceil is the ceiling function. Inorder to ensure that these probabilities sum up to 1, the qi is renormalised: qi= qi/sum_i^n(qj) [sum_1^n corresponds to summation notation representing the sum of all qj where j ranges from 1 to n).Therefore for each probabilistic model, we now have an associated  approximate distribution.
+	
+Since the new distribution q(xn) is an approximation of p(xn), the extra number of bits used on average can be found using KL divergence: KL(p||q) = sum_1^n[pi * log(pi/qi)].
+The information provided by the KL divergence can be used by the receiver to deduce the appropiate probabilistic model used during the encoding process. Lets consider the following scenario:
+Suppose the sender decides to use the probability model H. The sender encodes the KL(p||q)*N (where p is generated from the model H, q is the approximate distribution and  N is the number of characters in the file) in the header. Hence if the sender uses model 1, the KL divergence is computed between the probabilty distribution p(xn) and its associated approximation  q(xn)= [ceil[2^8*p(xn)]/2^8]. Similarly if the sender decides to use the second model the KL divergence will be the probabilty distribution p(xn+1/xn) and its associated approximation  q(xn+1/xn)= [ceil[2^8*p(xn+1/xn)]/2^8]. 
+
+The receiver can deduce  particular the probabilistic model H used by the arithmetic encoder by subtracting the subtracting the number of bits contained in the header information from number of bits used in the compressed data. The result will overlap exactly with the number of bits needed by the arithmetic encoder to compress the file when it used the probability model H. 
+
  
-		
+If the sender decides to use model 1, the number of bits used in the header is ceil(KL[p(xn)||q(xn)] *344026) =1245 bits, the number of bits used to compress the data is ceil[h(x|H)]+2 =1435081 bits  (we use the approximate distribution) and the size of the file is 1436326 bits
+
+If the sender decides to use model 2, the number of bits used in the header is ceil(KL[p(xn+1|xn)||q(xn+1|xn)] *344026) = 7088 bits, the number of bits used to compress the data is ceil[h(x|H)]+2 = 1178318 bits (we use the approximate distribution) and the size of the file is 1185406 bits
+
+Code written to compute Kl divergence:
+#! /usr/bin/python
+import math
+def kullbackdiv(probdis1,probdis2):
+	informationcontent=0
+	for index,item in enumerate(probdis1):
+		if item!=0:
+			informationcontent+= item*math.log(item/probdis2[index],2)
+	return informationcontent
+
+
+Code written for Model 1:
+#! /usr/bin/python
+import math
+def compressionLPH_Unf(file):
+	f =open (file,'r')
+	H,prodis =unigrammodel('thesis.txt')
+	prodis = [ math.ceil(pow(2,8) *x)/pow(2,8) for x in prodis]
+	prodis = [ x/sum(prodis) for x in prodis]
+	letters =map(chr,range(97,123))	
+	letters.append(' ')
+	print prodis
+	print sum(prodis)		
+	try:
+		content = f.read()
+		informationcontent=float(0);
+		L=[]
+		for i in range(len(content)):
+			informationcontent= informationcontent- math.log(prodis[letters.index(content[i])],2)
+			
+		return (informationcontent),prodis
+	finally:
+		f.close()
+
+Code written Model 2:
+#! /usr/bin/python
+import math
+def compressionLPH_Bg(file):	
+	f =open (file,'r')
+	H,prodis =unigrammodel('thesis.txt')#prodis= P(x) where x is a letter
+	letters =map(chr,range(97,123))	
+	letters.append(' ')	
+	H2,bgprodis= bigrammodel(file)#bdprodis = P(x1,x2) the joint distributions
+	
+	try:
+		content= f.read()
+		informationcontent= math.log(prodis[letters.index(content[0])],2) #first character generated by p(xn)
+		prev_l=content[0]
+		content=content[1:]
+		print len(content)
+		for i in range(len(content)):
+			index= letters.index(content[i])
+			index_prevl= letters.index(prev_l)
+			joindis_letter = getconditiondist(27,index_prevl,bgprodis)
+			conditional_probdis =[x/prodis[index_prevl] for x in joindis_letter]#P(xn,xn+1)/P(xn)
+			conditional_probdis=[math.ceil(pow(2,8) *x)/pow(2,8) for x in conditional_probdis]
+			conditional_probdis = [ x/sum(conditional_probdis) for x in conditional_probdis ]
+			information= math.log(conditional_probdis[index],2) 
+			informationcontent= informationcontent +information
+			prev_l= content[i]
+		return math.ceil(-informationcontent),bgprodis
+	finally:
+		f.close()
+
+
+---Compression with adaptation---
+
+5.
+
+An alternative to using header information is for both the sender and receiver to infer the distributions as they read or decode the file. 
+Using the i.i.d model, the procedure that I followed to encode the text file is as follows:
+	Step 1:
+	Create a dictionary to hold counts for each letter. The letters act as keys and the values associated with each letter refers the number of times the letter has been seen so far.
+	The product of probabilities is very small  and multiplying large number of probabilities leads to numerical underflow. To overcome this problem I have used log probabilities to store the probability of seeing the xn given the elements xk which we have already observed (k<n). 
+	Step2:
+	Therefore 
 
 ---Noisy channel Coding----
 
 ---X0R-ing packets-------
 6.
-Code Used:
+Code written:
 #! /usr/bin/python
 import operator
 def XOR():
@@ -261,7 +350,7 @@ Encoding Algorithm:
 
 At the initial step, the encoding algorithm adds redundancy to blocks of data instead of encoding 1 bit at a time. The algorithm coverts a sequence of source bits 's' of length K=4 into a transmitted sequence 't' of length N=7. These N-K extra bits are linear functions of the source bits and serve as their parity checks. Before transmission through the binary symmetric channel, further redundancy is added to the transmitted sequence 't'. Each of the source bits is repeated three times hence increasing the length of the transmitted sequence to N=15. 
 
-The code used to implement the encoding algorithm is as follows:
+The code written to implement the encoding algorithm is as follows:
 Code:
 #! /usr/bin/python
 import operator
@@ -298,7 +387,7 @@ Since we already know H*t=[0 0 0] in modulo 2 arithmetic, therefore the product 
 	
 
 
-The code used to implement the decoding algorithm is as follows:
+The code written to implement the decoding algorithm is as follows:
 #! /usr/bin/python
 import numpy
 def Decoder(ReceivedBits):
