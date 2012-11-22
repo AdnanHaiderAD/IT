@@ -1,6 +1,6 @@
 ---Character Statistics---
 1.
-H(Xn) = sum [- P(xn)log(Pxn)  ] here sum sum stands for summation
+The entrophy H(Xn) = sum [- P(xn)log(Pxn)  ] here sum  stands for summation over all possible xn
 P(xn) = cn/N where cn is the number of time xn occurs in the file and N is the total number of alphabets in the file
 
 Code written :
@@ -33,14 +33,12 @@ The entropy H(Xn) =4.17 bits(3sf)
 ----Bigram Statistics---
 2.
 
-The aim of this excercise is to  compute the joint entropy H(Xn,Xn+1)
-We know  H(Xn,Xn+1)= sum (-P(xn,xn+1)log(P(xn,xn+1)) where
-P(xn,xn+1) is the probability of selecting a character xn randomly from a file and also reading the next character xn+1
-Using the product rule P(xn,xn+1)= P(xn)P(xn+1|xn)
-Now P(xn) as I have mentioned above in my code is:
+The aim of this excercise is to  compute the joint entropy H(Xn,Xn+1).
+We know  H(Xn,Xn+1)= sum (-P(xn,xn+1)log(P(xn,xn+1)) where P(xn,xn+1) is the probability of selecting a character xn randomly from a file and reading the next character xn+1.
+Using the product rule, we can decompose this probability in the following manner: P(xn,xn+1)= P(xn)P(xn+1|xn)
+Now P(xn) as I have already mentioned above can be computed in the following manner:
 		P(xn) = cn/N where cn is the number of time xn occurs in the file and N is the total number of alphabets in the file
-Similarly 
-	P(xn+1|xn) = wn/cn where  wn is the number of times xn and xn+1 occur together and the interpretation of cn is the smae as above
+Similarly we can compute P(xn+1|xn) by: P(xn+1|xn) = wn/cn where  wn is the number of times xn and xn+1 occur together and the interpretation of cn is the same as above
 Therefore  P(xn)P(xn+1|xn) =cn/N *wn/cn = wn/N = P(xn,xn+1)
 The code used to perform this computation is as follows:
 
@@ -77,7 +75,7 @@ def bigrammodel(file):
 a)
 The join entrophy  H(Xn,Xn+1)=7.57 bits(3sf)
 
-b)  H(Xn,Xn+1)< 2H(Xn) because the joint proabilities P(xn,xn+1) captures the context dependedency between the symbols. In English  for example letter 'u'; is more probable after 'q' than after 'e'. Hence the information content associated with observing a letter like 'u' at any point will change if  we take into account the knowledge gained from our previous observations.
+b)  H(Xn,Xn+1)< 2H(Xn) because the joint proabilities P(xn,xn+1) captures the context dependency between the symbols. In English for example the letter 'u' is more probable after 'q' than after 'e'. Hence the information content associated with observing a letter like 'u' at any point will change if  we take into account the knowledge gained from our previous observations.
 
 c)
 We know  H(Xn,Xn+1)= H(Xn) + H(Xn+1|Xn)
@@ -91,7 +89,7 @@ We know  H(Xn,Xn+1)= H(Xn) + H(Xn+1|Xn)
 For any probabilistic model H, the maximum number of bits used by an arithmetic encoder is equal to ceil[h(x|H)]+2 bits where ceil is the ceiling function and h(x|H) = log[1/P(x|H)]
 a)
 In the first instance, the characters are generated i.i.d with p(xn) using the unigram model. Therefore P(x|H) = prod_1^N[ P(x_i)] where prod_i^N corresponds the capital Pi notation representing the product of all p(xi) ranging from i=1 to i=N  where xi represents the ith alphabet in the file.
-[Note : during the actual computing phase, multiplying large number of probabilities lead to numerical underflow. Hence to overcome this effect I have added the probabilities in log-space]
+[Note : during the actual computation phase, multiplying large number of probabilities lead to numerical underflow. Hence to address this issue, at each step have computed the log probabilities and added these probabilities in log-space]
 Therefore the maximum number of bits the arithmetic encoder might use to encode the file is ceil[log[1/P(x|H)]]+2= 1433836 bits
 
 Code :
@@ -115,7 +113,7 @@ def arithmeticCodingUnf(file):
 				
 
 b)
-In the second instance, the probabilistic model employed is more sophisticated. The first character is generated from p(xn) and all subsequent characters are generated from p(xn+1|xn) distribution. Therefore P(x|H) = p(x1)prod_i^N[ P(xi+1|xi)] (prod_i^N corresponds the capital Pi notation representing the product of all p(xi+1|xi) ranging from i=1 to i=N  where xi+1 and xi represents the i+1 and ith alphabet in the file.
+In the second instance, the probabilistic model employed is more sophisticated. The first character is generated from p(xn) and all subsequent characters are generated from p(xn+1|xn) distribution. Therefore P(x|H) = p(x1)*prod_i^N[ P(xi+1|xi)] (prod_i^N corresponds the capital Pi notation representing the product of all p(xi+1|xi) ranging from i=1 to i=N  where xi+1 and xi represents the i+1 and ith alphabet in the file.
 The distribution of p(xn+1|xn) has been computed from the joint distibution p(xn,xn+1) ( computed in question 2) and marginal distribution p(xn)(computed in question 1) 
 using Bayes rule: p(xn+1|xn)= p(xn,xn+1)/p(xn)
 Therefore the maximum number of bits the arithmetic encoder might use to encode the file is ceil[log[1/P(x|H)]]+2= 1171230 bits
@@ -240,15 +238,16 @@ def compressionLPH_Bg(file):
 
 An alternative to using header information is to have for both the sender and receiver  infer the distributions as they read or decode the file. 
 Using the i.i.d model, the sender can encode the file by using the following procedure :
-	Step 1:
-	Create a dictionary to hold counts for each letter. The letters act as keys and the values associated with each letter refers the number of times the letter has been seen so far.
-	The product of probabilities is very small  and multiplying large number of probabilities leads to numerical underflow. To overcome this problem I have used log probabilities to store the probability of seeing the xn given the elements give the already observed xk elements and also to store the Total probability P(xn,xn-1....x1). 
-	Step2:
-	The algorithm then infers the distributions as follows:
-		Observe the ith element 
-		Compute log[P(xi=ai|x)] = log[(ki+1)/(n+|A|)] ( ai is the letter observed, ki is the  number of times ai has been observed, n is the total number of characters seen so far,|A|=27)
-		Add this probability to the total log probability
-		Increment ki by 1
+	
+	Create a dictionary to hold counts for each letter. The letters act as keys and the values associated with each letter refer to the number of times the letter has been seen so far.
+	 Multiplying large number of probabilities results in numbers which are vey very small and this may lead to numerical underflow. To overcome this problem I have used log probabilities to store the probability of seeing the xn given the elements give the already observed xk elements and also to store the total probability P(xn,xn-1....x1) of the data seen so far. 
+
+	The algorithm then performs the following steps to infer the model distribution:
+		1.Observe the ith element 
+		2.Compute log[P(xi=ai|x)] = log[(ki+1)/(n+|A|)] ( ai is the letter observed, ki is the  number of times ai has been observed, n is the total number of characters seen so far,|A|=27)
+		3.Add this probability to the total log probability
+		4.Increment ki by 1
+		5.Repeat Step 1
 
 Code :
 #! /usr/bin/python
@@ -275,7 +274,7 @@ The number of bits used to compress the file is 1434025 bits
 
 
 
-To encode using the  second model, the following changes have to be made to the algorithm above. The dictionary must now hold bigram counts. The keys stored in the dictionary are of the form 'aj ai'  and the values associated with them 'kij' represents the number of time ai has been seen after character aj has appeared. Hence the log[P(xi=ai|xj=aj,x)] =log[(kij+1)/(nj+|A|)](nj is the number of times aj has been seen so far and can be computed by summing over j for all kij) 
+To encode using the  second model, the following changes have to be made to the algorithm above: The dictionary must now hold bigram counts. The keys stored in the dictionary should now be of the form 'aj ai'  and the values associated with them 'kij' represents the number of time ai has been seen after character aj has appeared. Hence the log[P(xi=ai|xj=aj,x)] =log[(kij+1)/(nj+|A|)](nj is the number of times aj has been seen so far and can be computed by summing over j for all kij) 
 
 Code:
 #! /usr/bin/python
@@ -334,29 +333,20 @@ The resutant ASCII string that is outputed:'['
 
 The steps performed by the algorithm are as follows:
 
-Step1:
-In step 1,the algorithm uses the information in 'received.txt' to create the list  'encodedPackets' and utilises the information in 'packets.txt' to create the list  'sourceBitsUsed'. 'encodedPackets' is a list of integers while 'sourceBitsUsed' is a list of list of integers but both lists have the same size. The ith  item in  encodedPackets[i] represents the ith encoded packet received and the ith list associated with sourceBitsUsed[i]  corresponds to  the source bits used to create this packet. Hence the indices of the lists serve as edges connecting  encoding packets with their appropiate source bit information.
 
-Step 2:
-In step 2, The algorithm  sequentially searches through each list in sourceBitsUsed to find the max integer 'm'. From the value of 'm', the algorithm can  then directly infer the number of source bits that it needs to deocde. 
-
-Step3:
-
-
+In step 1,the algorithm utilizes the information in 'received.txt' and  'packets.txt' to create two lists:  'sourceBitsUsed'and 'encodedPackets' of the same size. The list 'encodedPackets' is a list of integers while 'sourceBitsUsed' is a list of list of integers. The ith  item in  encodedPackets[i] represents the ith encoded packet received while the ith list associated with sourceBitsUsed[i]  corresponds to  the source bits used to create this packet. Hence the indices of the lists serve as edges connecting  encoding packets with their appropiate source bit information.
+In step 2, The algorithm  sequentially searches through each list in sourceBitsUsed to find the max integer 'm'. From the value of 'm', the algorithm can  then directly infer the number of source bits that it needs to decode. 
 In the last step, the algorithm creates a list {s1,s2.....sm} (where si represents the source packet i) and executes the following loop until all si have been decoded.
 Loop-
-	while there exists s_i that is not decoded:
-		for each list L in sourceBitsUsed:
-			The algorithm checks whether the L contains 1 item. This check allows the program to locate encoded packets that are connected to only one source packet.  
-			If the above check succeeds:
-				i:Set the kth source alphabet(the value of k is given by the source packet) to the string chaacter defined by L's associated encoded packet.
-				ii:Store L's associated encoded packet to local variable 'num' and for all lists in sourceBitsUsed that contains this source packet, apply bit wise modulo 2 addition between the corresponding encoded packet of these lists and num.
-				iii: Remove the source packet from every list in sourcebitsUsed.(Step ii and Step iii ensures all edges connected L's sourcepacket has been removed)
+	while there exists s_i that hasn't been decoded:
+		
+	for each list L in sourceBitsUsed:
+	The algorithm checks whether the L contains 1 item. This check allows the program to locate encoded packets that are connected to only one source packet.  
+	If the above check succeeds:
+	i:Set the kth source alphabet(the value of k is given by the source packet) to the string character defined by L's associated encoded packet.
+	ii:Store L's associated encoded packet to local variable 'num' and for all lists in sourceBitsUsed that contains this source packet, apply bit wise modulo 2 addition between the corresponding integer contained in encoded packet of these lists and num.
+	iii: Remove the source packet from every list in sourcebitsUsed.(Step ii and Step iii ensures all edges connected L's sourcepacket has been removed)
 	
-
-
-
-
 
 Assumption made by the algorithm:
 The algorothm assumes that the receiver has collected enough encoded packets to decode the original message.
@@ -411,9 +401,9 @@ def LTdecode(file,file2):
 
 The error correcting code that I have employed for the last task is a combination of the Hamming(7,4) code and a repetition code.The description of the encoding and decoding algorithms is as follows:
 
-Encoding Algorithm:
+The Encoding Algorithm:
 
-At the initial step, the encoding algorithm adds redundancy to blocks of data instead of encoding 1 bit at a time. The algorithm coverts a sequence of source bits 's' of length K=4 into a transmitted sequence 't' of length N=7. These N-K extra bits are linear functions of the source bits and serve as their parity checks. Before transmission through the binary symmetric channel, further redundancy is added to the transmitted sequence 't'. Each of the source bits is repeated three times hence increasing the length of the transmitted sequence to N=15. 
+At the initial step, the encoding algorithm adds redundancy to blocks of data instead of encoding 1 bit at a time. The algorithm coverts a sequence of source bits 's' of length K=4 into a transmitted sequence 't' of length N=7. The N-K extra bits are linear functions of the source bits and serve as their parity checks. Before transmission through the binary symmetric channel, further redundancy is added to the transmitted sequence 't'. Each of the source bits is repeated three times hence increasing the length of the transmitted sequence to N=15. 
 
 The code written to implement the encoding algorithm is as follows:
 Code:
@@ -431,24 +421,22 @@ def Encoder(sourcebits):
 	return R3code+str(s5)+str(s6)+str(s7) 	
 
 
-This proposed error correcting code will fail to correct errors in situations where the noisy communication channel used to forward the transmitted sequence does not belong to the class of discrete memoryless channel. The decoding process of the proposed error correcting code assumes that the channel used is synchronized i.e the channel does not perform any insertions, deletions or permutations to the transmitted requence and noise is only added in the form of bit flips. As it is already stated in the question that the channel used is a BSC, which belongs to the class of discrete memoryless channels, it is hence safe to conclude that we are operating in a synchronized channel
+
 
 Decoding algorithm:
 
 The recieved sequence 'r' from the noist channel can be interpreted as a vector r where  r= t+n (t is the transmitted vector and n is the noise vector added by the channel). Upon receiving this vector r, the decoder attempts to remove and correct errors in two stages before outputting the most likley values of the original 4 source bits 's'.
 
-Stage 1:
-In the first stage, the algorithm reads the first 12 bits and partitions these bits in groups of three in a sequential manner.The groups generated will be of the form {r1,r2,r3} ,{r4,r5,r6} and so forth. If the channel introduced no error during transmission, then each group 'i' (where i belongs to {1,2,3,4}) will contain  copies of the single source bit s_i. To reduce the effect of noise, the algorithm extracts the most likely values of  each source bit s_i by performing a majority vote  on their respective groups.
+In the first stage, the algorithm reads the first 12 bits and partitions these bits in groups of three in a sequential manner.The groups generated will be of the form {r1,r2,r3} ,{r4,r5,r6} and so forth. If the channel introduced no error during transmission, then each group 'i' (where i belongs to {1,2,3,4}) will contain consistent copies of the single source bit s_i. To reduce the effect of noise, the algorithm extracts the most likely values of each source bit s_i by performing a majority vote  on their respective groups.
 
-Stage 2:
-In the second stage, the algorithm reads the final three bits and uses these bits to achieve better estimates for the values of the source bits.This stage infact is exactly identical to the Hamming(7,4) decoding process. After conducting step 1, the decoder reduces the size of the received vector from 15 to 7 by removing redundant copies of the source bits and makes estimates of the values associated with the source bits through the use of majority votes. If all the noise introduced by the channel was removed in the stage 1, then this new reduce r vector will satisfy the equation r=G'*s (where G' represents the transpose of the 4 by 7 matrix mentioned in page 10 in Mackay) and the equation H*r=[0,0,0]( where each row of the matrix H represents a parity check).
-However, the decoding process suffers from the same drawbacks as the hamming(7,4) decoder. The decoder fails to correct any m-bit error patterns where m>=2.
+In the second stage, the algorithm reads the final three bits and uses these bits to achieve better estimates for the values of the source bits.This stage infact is exactly identical to the Hamming(7,4) decoding process. After conducting step 1, the decoder reduces the size of the received vector from 15 to 7 by removing redundant copies of the source bits and makes estimates of the values associated with the source bits through the use of majority votes. If all the noise introduced by the channel was removed in the stage 1, then this new reduce r vector will satisfy the equation r=G'*s (where G' represents the transpose of the 4 by 7 matrix used to generate the transmitted sequence during the Hamming(7,4) encoding process) and the equation H*r=[0,0,0]( where each row of the matrix H represents a parity check).
+The decoding process suffers from the same drawbacks as the hamming(7,4) decoder. The decoder fails to correct any m-bit error patterns where m>=2.
 To correct one-bit error patterns, the algorithm uses the following methodology:
 
 As I have already mentioned, if there were no errors, then r=t and Hr=[0,0,0] (in modulo 2 arithmetic)
-Now in the case where r= t+n w(here n is one bit error pattern ie it is a vector of length 7 where only the ith entry is non-zero and set to 1)
+Now in the case where r= t+n (where n is one bit error pattern ie it is a vector of length 7 where only the ith entry is non-zero and set to 1)
  H*r= H*(t+n) = H*t +H*n
-Since we already know H*t=[0 0 0] in modulo 2 arithmetic, therefore the product of H*r will be equal to  H*n whose product produces the ith column of the H matrix.There are seven possible one-bit error patterns that can be corrected by the decoder and each of these patterns have a one-to correpondence with the columns of the H matrix. Thus for example, if n=[0000100] then H*r will produce the 5th column of H, hence telling the algorithm to flip the 5th bit of vector r. This method is in fact optimal since it aims to flip the minimum number of bits such that the three parity checks are satisfied.
+Since we already know H*t=[0 0 0] in modulo 2 arithmetic, therefore the product of H*r will be equal to  H*n whose product produces the ith column of the H matrix.There are seven possible one-bit error patterns that can be corrected by the decoder and each of these patterns have a one-to correpondence with the columns of the H matrix. Thus for example, if n=[0000100] then H*r will produce the 5th column of H, hence telling the algorithm to flip the 5th bit of vector r. This method is in fact optimal since it aims to flip the minimum number of bits such that all three parity checks are satisfied.
 	
 
 
@@ -477,6 +465,11 @@ def Decoder(ReceivedBits):
 		
 		t[index]=(t[index]+1)^2
 	return t[:4]	
+This proposed error correcting code will fail to correct errors in situations where the noisy communication channel used to forward the transmitted sequence does not belong to the class of discrete memoryless channels. The decoding process assumes that the channel used is synchronized i.e the channel does not perform any insertions, deletions or permutations on the transmitted sequence and noise is only added in the form of bit flips. As it is already stated in the question that the channel used is a BSC, which belongs to the class of discrete memoryless channels, it is hence safe to conclude that we are operating in a synchronized channel.
+
+The rate of code : 4/15
+
+
 		
 		
 	
