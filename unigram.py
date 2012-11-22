@@ -159,14 +159,14 @@ def compressionAdaptUnf(file):
 	letters =map(chr,range(97,123))	
 	letters.append(' ')
 	for alph in letters:
-		Ki_counter[alph]=0
+		Ki_counter[alph]=0 #initializing dictionary
 	
 	try:
 		content=f.read()
 		informationcontent=0
-		for i in range(len(content)):
-			ai= content[i]
-			informationcontent+= -math.log(float(Ki_counter[ai]+1)/float(i+len(letters)),2)
+		for n in range(len(content)):
+			ai= content[n]
+			informationcontent+= -math.log(float(Ki_counter[ai]+1)/float(n+len(letters)),2)
 			Ki_counter[ai]+=1
 		return informationcontent
 	finally:
@@ -180,7 +180,7 @@ def compressionAdaptBg(file):
 	letters.append(' ')
 	for e in letters:
 		for m in letters:
-			Ki_counter[e+m]=0
+			Ki_counter[e+m]=0 #keys are now of the form 'aj ai'
 	prev_l=''
 	try:
 		content=f.read()
@@ -190,7 +190,7 @@ def compressionAdaptBg(file):
 				informationcontent+=-math.log(float(1)/len(letters),2)
 					
 			else:
-				nj= sum([ Ki_counter[prev_l+x]	for x in letters] )
+				nj= sum([ Ki_counter[prev_l+x]	for x in letters] )#summing over j for all kij to get nj
 				informationcontent+= -math.log(float(Ki_counter[prev_l+content[i]]+1)/float(nj+len(letters)),2)
 				Ki_counter[prev_l+content[i]]+=1
 			prev_l=content[i]

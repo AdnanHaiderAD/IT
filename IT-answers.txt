@@ -238,13 +238,78 @@ def compressionLPH_Bg(file):
 
 5.
 
-An alternative to using header information is for both the sender and receiver to infer the distributions as they read or decode the file. 
-Using the i.i.d model, the procedure that I followed to encode the text file is as follows:
+An alternative to using header information is to have for both the sender and receiver  infer the distributions as they read or decode the file. 
+Using the i.i.d model, the sender can encode the file by using the following procedure :
 	Step 1:
 	Create a dictionary to hold counts for each letter. The letters act as keys and the values associated with each letter refers the number of times the letter has been seen so far.
-	The product of probabilities is very small  and multiplying large number of probabilities leads to numerical underflow. To overcome this problem I have used log probabilities to store the probability of seeing the xn given the elements xk which we have already observed (k<n). 
+	The product of probabilities is very small  and multiplying large number of probabilities leads to numerical underflow. To overcome this problem I have used log probabilities to store the probability of seeing the xn given the elements give the already observed xk elements and also to store the Total probability P(xn,xn-1....x1). 
 	Step2:
-	Therefore 
+	The algorithm then infers the distributions as follows:
+		Observe the ith element 
+		Compute log[P(xi=ai|x)] = log[(ki+1)/(n+|A|)] ( ai is the letter observed, ki is the  number of times ai has been observed, n is the total number of characters seen so far,|A|=27)
+		Add this probability to the total log probability
+		Increment ki by 1
+
+Code :
+#! /usr/bin/python
+import math
+def compressionAdaptUnf(file):
+	f =open (file,'r')
+	Ki_counter=dict([])
+	letters =map(chr,range(97,123))	
+	letters.append(' ')
+	for alph in letters:
+		Ki_counter[alph]=0 #initializing dictionary
+	
+	try:
+		content=f.read()
+		informationcontent=0
+		for n in range(len(content)):
+			ai= content[n]
+			informationcontent+= -math.log(float(Ki_counter[ai]+1)/float(n+len(letters)),2)
+			Ki_counter[ai]+=1
+		return informationcontent
+	finally:
+		f.close()
+The number of bits used to compress the file is 1434025 bits
+
+
+
+To encode using the  second model, the following changes have to be made to the algorithm above. The dictionary must now hold bigram counts. The keys stored in the dictionary are of the form 'aj ai'  and the values associated with them 'kij' represents the number of time ai has been seen after character aj has appeared. Hence the log[P(xi=ai|xj=aj,x)] =log[(kij+1)/(nj+|A|)](nj is the number of times aj has been seen so far and can be computed by summing over j for all kij) 
+
+Code:
+#! /usr/bin/python
+import math
+def compressionAdaptBg(file):
+	f =open (file,'r')
+	Ki_counter=dict([])
+	letters =map(chr,range(97,123))	
+	print letters
+	letters.append(' ')
+	for e in letters:
+		for m in letters:
+			Ki_counter[e+m]=0 #keys are now of the form 'aj ai'
+	prev_l=''
+	try:
+		content=f.read()
+		informationcontent=0
+		for i in range(len(content)):
+			if i==0:
+				informationcontent+=-math.log(float(1)/len(letters),2)
+					
+			else:
+				nj= sum([ Ki_counter[prev_l+x]	for x in letters] )#summing over j for all kij to get nj
+				informationcontent+= -math.log(float(Ki_counter[prev_l+content[i]]+1)/float(nj+len(letters)),2)
+				Ki_counter[prev_l+content[i]]+=1
+			prev_l=content[i]
+				
+		return informationcontent
+	finally:
+		f.close()
+
+
+The number of bits used to compress the file is 1175380 bits
+
 
 ---Noisy channel Coding----
 
